@@ -1,29 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Twitter, Facebook, Instagram, Music, Clock, Users, 
-  MapPin, Calendar, ShoppingBag, PlayCircle, Star, Heart, Mail
-} from 'lucide-react';
 import { supabase } from './lib/supabaseClient';
 import { ProfileHeader } from './components/ProfileHeader';
 import { LinkButton } from './components/LinkButton';
-import { ProfileData, LinkItem, DatabaseLink } from './types';
-
-// Icon Map: String from DB -> React Component
-const iconMap: { [key: string]: any } = {
-  'Twitter': Twitter,
-  'Facebook': Facebook,
-  'Instagram': Instagram,
-  'Music': Music,
-  'Clock': Clock,
-  'Users': Users,
-  'MapPin': MapPin,
-  'Calendar': Calendar,
-  'ShoppingBag': ShoppingBag,
-  'PlayCircle': PlayCircle,
-  'Star': Star,
-  'Heart': Heart,
-  'Mail': Mail
-};
+import { PreviewGrid } from './components/PreviewGrid';
+import { ProfileData, LinkItem } from './types';
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -36,7 +16,7 @@ const App: React.FC = () => {
         setLoading(true);
 
         // 1. Fetch Profile
-        const { data: profileData, error: profileError } = await supabase
+        const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
           .limit(1)
@@ -44,55 +24,23 @@ const App: React.FC = () => {
 
         if (profileData) {
           setProfile({
-            // Hardcoding specific name and bio as requested
             name: 'bella',
             bio: '@sosofss__',
-            // Usando as URLs do Supabase Storage conforme solicitado
             avatarUrl: 'https://vtcutjksipkorbecoevo.supabase.co/storage/v1/object/public/fotos/1.png',
-            // Forçando verificado como true
             isVerified: true, 
             backgroundImageUrl: 'https://vtcutjksipkorbecoevo.supabase.co/storage/v1/object/public/fotos/2.png'
           });
         }
 
-        // 2. Fetch Links
-        const { data: linksData } = await supabase
-          .from('links')
-          .select('*')
-          .eq('is_active', true)
-          .order('display_order', { ascending: true });
+        // 2. Definindo o botão de compra VIP com a URL de checkout atualizada
+        const vipLink: LinkItem = {
+          id: 'vip-buy-button',
+          title: 'Acesse o canal VIP no Telegram por apenas R$35,90',
+          url: 'https://app.pushinpay.com.br/service/pay/A0AE0380-C80F-4491-AB97-D6651984AD67',
+          image: 'https://vtcutjksipkorbecoevo.supabase.co/storage/v1/object/public/fotos/logo%20telegram%20rosa.png'
+        };
 
-        if (linksData) {
-          const mappedLinks: LinkItem[] = linksData.map((l: DatabaseLink, index: number) => {
-            // Override for the first button (Telegram Blue)
-            if (index === 0) {
-              return {
-                id: l.id,
-                title: 'Canal de prévias free',
-                url: 'https://t.me/sofiaahxz',
-                image: 'https://vtcutjksipkorbecoevo.supabase.co/storage/v1/object/public/fotos/logo%20telegram.png'
-              };
-            }
-
-            // Override for the second button (Telegram Pink/VIP)
-            if (index === 1) {
-              return {
-                id: l.id,
-                title: 'Assine o vip',
-                url: 'https://t.me/Sofffiiaa_bot',
-                image: 'https://vtcutjksipkorbecoevo.supabase.co/storage/v1/object/public/fotos/logo%20telegram%20rosa.png'
-              };
-            }
-            
-            return {
-              id: l.id,
-              title: l.title,
-              url: l.url,
-              icon: iconMap[l.icon_name] || Star // Fallback icon
-            };
-          });
-          setLinks(mappedLinks);
-        }
+        setLinks([vipLink]);
 
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -131,20 +79,19 @@ const App: React.FC = () => {
           
           <ProfileHeader profile={profile} />
 
-          <div className="flex flex-col w-full space-y-2 mt-6">
+          {/* Seção de Prévias */}
+          <PreviewGrid />
+
+          <div className="flex flex-col w-full space-y-4">
             {links.map((link) => (
               <LinkButton key={link.id} link={link} />
             ))}
           </div>
 
-          <div className="mt-8 text-white/90 font-medium text-sm flex items-center gap-2 drop-shadow-md">
-            <span> </span>
-          </div>
-
         </div>
         
         {/* Footer */}
-        <footer className="absolute bottom-4 text-white/60 text-xs font-light tracking-wide">
+        <footer className="mt-8 mb-4 text-white/60 text-xs font-light tracking-wide text-center w-full">
           © 2025 {profile.name}
         </footer>
       </main>
